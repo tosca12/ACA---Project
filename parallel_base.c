@@ -30,7 +30,6 @@ void binComplement(int rows, int cols, int imageMatrix[rows][cols]){
 
 void binErosion(int rows, int cols, int eroded[rows][cols]){
 
-
         
         int image[rows][cols];
 
@@ -74,7 +73,6 @@ void binDilation(int rows, int cols, int dilated[rows][cols]){
             for (int j=0; j<cols; j++){
                 image[i][j]= dilated[i][j];
             }
-
         }
 
         for(int i = 1; i < rows -1 ; i++){
@@ -126,7 +124,7 @@ void identifyBorders(int rows, int cols, int imageMatrix[rows][cols]) {
     // Calculate the difference between the original and eroded images
     for(int i=0; i<rows; i++){
         for(int j=0; j<cols; j++){
-                imageMatrix[i][j] = image[i][j]-imageMatrix[i][j];
+                imageMatrix[i][j] = image[i][j] - imageMatrix[i][j];
         }
     }
 
@@ -162,6 +160,9 @@ int main(int argc, char*argv[]) {
     FILE *inputImage;
     char magicNumber[3];
     int width, height, maxVal, newRows, newHeight;
+    double tot_time = 0.0;
+    double start_time = 0.0;
+    double stop_time = 0.0;
 
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
@@ -174,6 +175,9 @@ int main(int argc, char*argv[]) {
     /* The program requires as an input the name of the image file to be elaborated; if the number of provided arguments is 
      * strictly less than 2, an error message is printed 
      */
+
+    start_time = MPI_Wtime();
+
     if (argc != 3) {
         fprintf(stderr, "Error: Wrong number of arguments\nUsage: mpirun -n <size> input_image.pgm <threshold>\n");
         return 1;
@@ -237,7 +241,6 @@ if(my_rank==0){
             }
         }
 
-
         for (int i = height-newRows; i < height; i++) {
             for (int j = 0; j < width; j++) {
                 imageMatrix[i][j]= 0;
@@ -249,7 +252,6 @@ if(my_rank==0){
     fclose(inputImage);
 
 }
-double start_time = MPI_Wtime();
 
   	MPI_Scatter(imageMatrix, height/size*width, MPI_INT, 
 		    recvMatrix, height*width/size, MPI_INT,
@@ -270,14 +272,7 @@ double start_time = MPI_Wtime();
 
 
     MPI_Gather(recvMatrix, height*width/size, MPI_INT, result, height*width/size, MPI_INT, 0, MPI_COMM_WORLD);
-double stop_time = MPI_Wtime();
 
-
-double total_time = 0.0;
-if (my_rank ==0){
-	total_time = stop_time - start_time;
-	printf("total time: %f seconds\n", total_time);
-}
 
     if (my_rank==0){
         writeImage(height, width, maxVal, result, "./out/opened.pgm");
@@ -288,6 +283,9 @@ if (my_rank ==0){
 
      if (my_rank==0){
         writeImage(height, width, maxVal, result, "./out/borders.pgm");
+        stop_time = MPI_Wtime();
+        tot_time= stop_time - start_time;
+        printf("Total time: %f", tot_time);
     }
 
 
