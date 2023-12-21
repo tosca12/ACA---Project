@@ -291,25 +291,6 @@ int main(int argc, char *argv[])
         }
     }
 
-    if (my_rank == 0)
-    {
-        writeImage(height / size, width, maxVal, recvMatrix, "./out/opened0.pgm");
-    }
-
-    if (my_rank == 1)
-    {
-        writeImage(height / size, width, maxVal, recvMatrix, "./out/opened1.pgm");
-    }
-
-    if (my_rank == 2)
-    {
-        writeImage(height / size, width, maxVal, recvMatrix, "./out/opened2.pgm");
-    }
-
-    if (my_rank == 3)
-    {
-        writeImage(height / size, width, maxVal, recvMatrix, "./out/opened3.pgm");
-    }
 
     if (my_rank == 0)
     {
