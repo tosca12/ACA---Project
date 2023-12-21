@@ -151,7 +151,7 @@ void identifyBorders(int** imageMatrix, int width, int height) {
 }
 
 
-int **saveImageData (FILE *inputImage, int width, int height) {
+int **saveImage (FILE *inputImage, int width, int height) {
 
     int **matrix = (int **)malloc(height * sizeof(int*));
     
@@ -235,8 +235,8 @@ void writeImage(int **matrix, int width, int height, int maxVal, const char *out
     // Reading the width, height and maximum value contained in the header of the image
     fscanf(inputImage, "%d %d %d", &width, &height, &maxVal);
 
-    // Calling the saveImageData function to obtain the matrix containint image data to be elaborated
-    imageMatrix = saveImageData(inputImage, width, height);
+    // Calling the saveImage function to obtain the matrix containint image data to be elaborated
+    imageMatrix = saveImage(inputImage, width, height);
 
     // Closing the file
     fclose(inputImage);
