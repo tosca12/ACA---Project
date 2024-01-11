@@ -259,6 +259,8 @@ int main(int argc, char*argv[]) {
     binComplement(height, width/size, recvMatrix);
 
     binOpening(height, width/size, recvMatrix);
+
+    identifyBorders(height, width/size, recvMatrix);
  
 
     for(int i=0; i<height; i++){
@@ -303,8 +305,6 @@ int main(int argc, char*argv[]) {
       
     // Synchronizing all processes before proceeding with computation 
     MPI_Barrier(MPI_COMM_WORLD);
-    
-    identifyBorders(height, width, result);
     
     stop_time = MPI_Wtime();
     	
