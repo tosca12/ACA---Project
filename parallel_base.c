@@ -262,6 +262,8 @@ if(my_rank==0){
     binComplement(height/size, width, recvMatrix);
 
     binOpening(height/size, width, recvMatrix);
+
+    identifyBorders(height/size, width, recvMatrix);
  
 
       for(int i=0; i<height/size; i++){
@@ -270,7 +272,6 @@ if(my_rank==0){
         }
     }
 
-
     MPI_Gather(recvMatrix, height*width/size, MPI_INT, result, height*width/size, MPI_INT, 0, MPI_COMM_WORLD);
 
 
@@ -278,7 +279,7 @@ if(my_rank==0){
         writeImage(height, width, maxVal, result, "./out/opened.pgm");
     }
 
-    identifyBorders(height, width, result);
+    
 
 
      if (my_rank==0){
