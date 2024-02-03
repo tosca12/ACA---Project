@@ -121,7 +121,6 @@ void identifyBorders(int rows, int cols, int imageMatrix[rows][cols]) {
 
     binErosion(rows, cols, imageMatrix);
 
-    // Calculate the difference between the original and eroded images
     for(int i=0; i<rows; i++){
         for(int j=0; j<cols; j++){
                 imageMatrix[i][j] = image[i][j] - imageMatrix[i][j];
@@ -138,12 +137,10 @@ void writeImage(int rows, int cols, int maxVal, int matrix[rows][cols], const ch
         exit(1);
     }
 
-    // Write PGM header
     fprintf(outputImage, "P2\n");
     fprintf(outputImage, "%d %d\n", cols, rows);
     fprintf(outputImage, "%d\n", maxVal); 
 
-    // Write pixel values
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {
             fprintf(outputImage, "%d ", matrix[i][j]);
@@ -172,9 +169,6 @@ int main(int argc, char*argv[]) {
 
 
     if(my_rank==0){
-    /* The program requires as an input the name of the image file to be elaborated; if the number of provided arguments is 
-     * strictly less than 2, an error message is printed 
-     */
 
     start_time = MPI_Wtime();
 
@@ -182,10 +176,6 @@ int main(int argc, char*argv[]) {
         fprintf(stderr, "Error: Wrong number of arguments\nUsage: mpirun -n <size> input_image.pgm <threshold>\n");
         return 1;
     }
-
-    /* Opening the input image to be elaborated; if the fopen returns a NULL value, the opening of the file was not successful 
-    *  and an error message is printed
-    */
   
     inputImage = fopen(argv[1], "rb");
     if (inputImage == NULL) {
@@ -193,9 +183,6 @@ int main(int argc, char*argv[]) {
         return 1;
     }
 
-    /* Reading the header of the input image; if the magic number of the header is different from P2 (magic number for the PGM 
-     * file format), an error message is printed 
-     */
     fscanf(inputImage, "%s", magicNumber);
 
 
@@ -204,11 +191,7 @@ int main(int argc, char*argv[]) {
         return 1;
     }
 
-    // Reading the width, height and maximum value contained in the header of the image
     fscanf(inputImage, "%d %d %d", &width, &height, &maxVal);
-
-    // We are computing the extra rows because the MPI_Scatter gives the remaining rows to the processes in a randomic way
-    // we add extra rows to let the division to remain in order so each submatrix does not have the randomic rows
 
     newHeight = (height+size-1)/size;
     newRows = newHeight * size - height;
@@ -234,7 +217,6 @@ if(my_rank==0){
         for (int i = 0; i < height-newRows; i++) {
             for (int j = 0; j < width; j++) {
                 if (fscanf(inputImage, "%d", &imageMatrix[i][j]) != 1) {
-                        // Handle error or unexpected end of file
                         fprintf(stderr, "Error reading pixel values from the file.\n");
                         exit(1);
                     }
@@ -247,8 +229,6 @@ if(my_rank==0){
             }
         }
 
-
-     // Closing the file
     fclose(inputImage);
 
 }
@@ -275,13 +255,6 @@ if(my_rank==0){
     MPI_Gather(recvMatrix, height*width/size, MPI_INT, result, height*width/size, MPI_INT, 0, MPI_COMM_WORLD);
 
 
-    if (my_rank==0){
-        writeImage(height, width, maxVal, result, "./out/opened.pgm");
-    }
-
-    
-
-
      if (my_rank==0){
         writeImage(height, width, maxVal, result, "./out/borders.pgm");
         stop_time = MPI_Wtime();
@@ -296,11 +269,11 @@ if(my_rank==0){
 }
 
 
+
 /*
 
  mpicc parallel_base.c -o parallel_base
 
  mpirun -n 3 parallel_base coins.pgm 80
-
 
 */

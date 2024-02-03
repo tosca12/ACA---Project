@@ -38,7 +38,6 @@ int **imageToMatrix(FILE *inputImage, int width, int height)
         {
             if (fscanf(inputImage, "%d", &matrix[i][j]) != 1)
             {
-                // Handle error or unexpected end of file
                 fprintf(stderr, "Error reading pixel values from the file.\n");
                 exit(1);
             }
@@ -79,8 +78,7 @@ void binErosion(int rows, int cols, int eroded[rows][cols])
 
             if (image[i][j] * image[i + 1][j] * image[i + 1][j + 1] *
                     image[i][j + 1] * image[i - 1][j + 1] * image[i - 1][j] *
-                    image[i - 1][j - 1] * image[i][j - 1] * image[i + 1][j - 1] !=
-                0)
+                    image[i - 1][j - 1] * image[i][j - 1] * image[i + 1][j - 1] !=0)
                 ;
 
             else
@@ -161,7 +159,6 @@ void identifyBorders(int rows, int cols, int imageMatrix[rows][cols])
 
     binErosion(rows, cols, imageMatrix);
 
-    // Calculate the difference between the original and eroded images
     for (int i = 0; i < rows; i++)
     {
         for (int j = 0; j < cols; j++)
@@ -180,12 +177,10 @@ void writeImage(int rows, int cols, int maxVal, int matrix[rows][cols], const ch
         exit(1);
     }
 
-    // Write PGM header
     fprintf(outputImage, "P2\n");
     fprintf(outputImage, "%d %d\n", cols, rows);
     fprintf(outputImage, "%d\n", maxVal);
 
-    // Write pixel values
     for (int i = 0; i < rows; i++)
     {
         for (int j = 0; j < cols; j++)
@@ -222,10 +217,6 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    /* Opening the input image to be elaborated; if the fopen returns a NULL value, the opening of the file was not successful
-     *  and an error message is printed
-     */
-
     inputImage = fopen(argv[1], "rb");
     if (inputImage == NULL)
     {
@@ -233,9 +224,6 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    /* Reading the header of the input image; if the magic number of the header is different from P5 (magic number for the PGM
-     * file format), an error message is printed
-     */
     fscanf(inputImage, "%s", magicNumber);
 
     if (magicNumber[0] != 'P' || magicNumber[1] != '2')
@@ -244,7 +232,6 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    // Reading the width, height and maximum value contained in the header of the image
     fscanf(inputImage, "%d %d %d", &width, &height, &maxVal);
 
     int treshold = atoi(argv[2]);
@@ -253,39 +240,56 @@ int main(int argc, char *argv[])
 
     imageMatrix = imageToMatrix(inputImage, width, height);
 
-    // Closing the file
     fclose(inputImage);
 
-    // Synchronizing all processes before proceeding with computation
     MPI_Barrier(MPI_COMM_WORLD);
 
-    // Dividing the rows of the input image matrix among processes
-    int rowsPerProcess = height / size;
-    int startRow = my_rank * rowsPerProcess;
-    int endRow = startRow + rowsPerProcess;
+    int structSize=3;
+    int rowsPerProcess = (height / size) + structSize;
 
-    // Printing information about the range of rows each process is working on
-    printf("Process %d working on rows %d to %d.\n", my_rank, startRow, endRow);
+    while (rowsPerProcess%3 !=0){
+        rowsPerProcess = rowsPerProcess + 1;
+        structSize= structSize+1;
+    }
+
+    int startRow = my_rank * (rowsPerProcess - structSize);
+    int endRow = startRow + (rowsPerProcess - structSize);
+
+    printf("The process %d is working on rows %d:%d of the image.\n", my_rank, startRow, endRow - 1);
 
     int recvMatrix[rowsPerProcess][width];
 
+    if(my_rank!=(size-1)){
     for (int i = 0; i < rowsPerProcess; i++)
     {
         for (int j = 0; j < width; j++)
-        {
+        {   
             recvMatrix[i][j] = imageMatrix[i + startRow][j];
         }
     }
 
-    binThreshold(height / size, width, recvMatrix, treshold);
+    }else{
 
-    binComplement(height / size, width, recvMatrix);
+    for (int i = 0; i < rowsPerProcess - structSize; i++)
+    {
+        for (int j = 0; j < width; j++)
+        {   
+            recvMatrix[i][j] = imageMatrix[i + startRow][j];
+        }
+    }
 
-    binOpening(height / size, width, recvMatrix);
 
-    identifyBorders(height / size, width, recvMatrix);
+    }
 
-    for (int i = 0; i < height / size; i++)
+    binThreshold(rowsPerProcess, width, recvMatrix, treshold);
+
+    binComplement(rowsPerProcess, width, recvMatrix);
+
+    binOpening(rowsPerProcess, width, recvMatrix);
+
+    identifyBorders(rowsPerProcess, width, recvMatrix);
+
+    for (int i = 0; i < rowsPerProcess; i++)
     {
         for (int j = 0; j < width; j++)
         {
@@ -307,7 +311,7 @@ int main(int argc, char *argv[])
 
         int processStartRow;
         int processEndRow;
-        // Master process receives transformed columns from other processes
+
         for (int process = 1; process < size; process++)
         {
             MPI_Recv(&processStartRow, 1, MPI_INT, process, 2, MPI_COMM_WORLD, &status);
@@ -324,20 +328,12 @@ int main(int argc, char *argv[])
     {
         MPI_Send(&startRow, 1, MPI_INT, 0, 2, MPI_COMM_WORLD);
         MPI_Send(&endRow, 1, MPI_INT, 0, 3, MPI_COMM_WORLD);
-        printf("rank: %d, righe %d - %d\n", my_rank, startRow, endRow);
-        // Slave processes send their transformed rows to the master process
         for (int i = 0; i < height / size; i++)
         {
             MPI_Send(&recvMatrix[i], width, MPI_INT, 0, startRow + i, MPI_COMM_WORLD);
         }
     }
 
-    if (my_rank == 0)
-    {
-        writeImage(height, width, maxVal, result, "./out/opened.pgm");
-    }
-
-    // Synchronizing all processes before proceeding with computation
     MPI_Barrier(MPI_COMM_WORLD);
     
     stop_time = MPI_Wtime();
@@ -353,11 +349,13 @@ int main(int argc, char *argv[])
     return 0;
 }
 
+
+
+
 /*
 
  mpicc parallel_rows.c -o parallel_rows
 
  mpirun -n 3 parallel_rows coins.pgm 80
-
 
 */
