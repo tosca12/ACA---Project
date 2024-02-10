@@ -277,20 +277,6 @@ int main(int argc, char*argv[]) {
     }
 
 
-    if(my_rank==0){
-         writeImage(height, colsPerProcess, maxVal, recvMatrix, "./out/borders0.pgm");
-    }
-
-       if(my_rank==1){
-         writeImage(height, colsPerProcess, maxVal, recvMatrix, "./out/borders1.pgm");
-    }
-
-       if(my_rank==2){
-         writeImage(height, colsPerProcess, maxVal, recvMatrix, "./out/borders2.pgm");
-    }
-
-
-
     if (my_rank == 0) {
             
         for(int i=0; i<height; i++){
