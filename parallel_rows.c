@@ -345,6 +345,11 @@ int main(int argc, char *argv[])
         printf("Total time: %f", tot_time);
     }
 
+    for (int i = 0; i < height ; i++) {
+            free(imageMatrix[i]);
+    }
+        free(imageMatrix);
+
     MPI_Finalize();
     return 0;
 }
