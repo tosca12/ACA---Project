@@ -36,13 +36,10 @@ int **imageToMatrix(FILE *inputImage, int width, int height)
     {
         for (int j = 0; j < width; j++)
         {
-            if (fscanf(inputImage, "%d", &matrix[i][j]) != 1)
-            {
-                fprintf(stderr, "Error reading pixel values from the file.\n");
-                exit(1);
-            }
+            matrix[i][j]=fgetc(inputImage);
         }
     }
+    
     return matrix;
 }
 
