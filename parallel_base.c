@@ -186,7 +186,7 @@ int main(int argc, char*argv[]) {
     fscanf(inputImage, "%s", magicNumber);
 
 
-    if (magicNumber[0] != 'P' || magicNumber[1] != '2') {
+    if (magicNumber[0] != 'P' || magicNumber[1] != '5') {
         printf("Error: file format not supported\n");
         return 1;
     }
@@ -207,7 +207,7 @@ int main(int argc, char*argv[]) {
 
     int treshold=atoi(argv[2]);
 
-	int recvMatrix[height/size][width];
+    int recvMatrix[height/size][width];
     int result[height][width];
     int imageMatrix[height][width];
 
@@ -216,10 +216,7 @@ if(my_rank==0){
 
         for (int i = 0; i < height-newRows; i++) {
             for (int j = 0; j < width; j++) {
-                if (fscanf(inputImage, "%d", &imageMatrix[i][j]) != 1) {
-                        fprintf(stderr, "Error reading pixel values from the file.\n");
-                        exit(1);
-                    }
+               imageMatrix[i][j]=fgetc(inputImage);
             }
         }
 
