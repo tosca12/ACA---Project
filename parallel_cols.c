@@ -29,11 +29,7 @@ int **imageToMatrix(FILE *inputImage, int width, int height) {
 
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
-            if (fscanf(inputImage, "%d", &matrix[i][j]) != 1) {
-                // Handle error or unexpected end of file
-                fprintf(stderr, "Error reading pixel values from the file.\n");
-                exit(1);
-            }
+           matrix[i][j]=fgetc(inputImage);
         }
     }
 
