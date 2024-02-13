@@ -202,7 +202,7 @@ int main(int argc, char*argv[]) {
     fscanf(inputImage, "%s", magicNumber);
 
 
-    if (magicNumber[0] != 'P' || magicNumber[1] != '2') {
+    if (magicNumber[0] != 'P' || magicNumber[1] != '5') {
         printf("Error: file format not supported\n");
         return 1;
     }
