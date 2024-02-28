@@ -286,7 +286,7 @@ int main(int argc, char*argv[]) {
         for (int process = 1; process < size; process++) {
             MPI_Recv(&processStartCol, 1, MPI_INT, process, 2, MPI_COMM_WORLD, &status);
             MPI_Recv(&processEndCol, 1, MPI_INT, process, 3, MPI_COMM_WORLD, &status);
-            printf("ricevo colonne %d - %d\n", processStartCol, processEndCol);
+
             for (int i = 0; i < height; i++) {
                 MPI_Recv(&result[i][processStartCol], processEndCol-processStartCol, MPI_INT, process, i, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             }
