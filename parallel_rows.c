@@ -314,7 +314,6 @@ int main(int argc, char *argv[])
             MPI_Recv(&processStartRow, 1, MPI_INT, process, 2, MPI_COMM_WORLD, &status);
             MPI_Recv(&processEndRow, 1, MPI_INT, process, 3, MPI_COMM_WORLD, &status);
 
-            printf("ricevo righe %d - %d\n", processStartRow, processEndRow);
             for (int i = processStartRow; i < processEndRow; i++)
             {
                 MPI_Recv(&result[i], width, MPI_INT, process, i, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
