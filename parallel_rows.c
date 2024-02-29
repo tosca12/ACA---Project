@@ -6,7 +6,7 @@
 int size, my_rank;
 MPI_Status status;
 
-void binThreshold(int rows, int cols, int imageMatrix[rows][cols], int value)
+void binThreshold(int rows, int cols, int **imageMatrix, int value)
 {
 
     for (int i = 0; i < rows; i++)
@@ -26,7 +26,6 @@ void binThreshold(int rows, int cols, int imageMatrix[rows][cols], int value)
 int **imageToMatrix(FILE *inputImage, int width, int height)
 {
     int **matrix = (int **)malloc(height * sizeof(int *));
-
     for (int i = 0; i < height; i++)
     {
         matrix[i] = (int *)malloc(width * sizeof(int));
@@ -43,7 +42,8 @@ int **imageToMatrix(FILE *inputImage, int width, int height)
     return matrix;
 }
 
-void binComplement(int rows, int cols, int imageMatrix[rows][cols])
+
+void binComplement(int rows, int cols, int **imageMatrix)
 {
 
     for (int i = 0; i < rows; i++)
@@ -55,10 +55,14 @@ void binComplement(int rows, int cols, int imageMatrix[rows][cols])
     }
 }
 
-void binErosion(int rows, int cols, int eroded[rows][cols])
+void binErosion(int rows, int cols, int **eroded)
 {
 
-    int image[rows][cols];
+    int **image = (int **)malloc(rows * sizeof(int *));
+        for (int i = 0; i < rows; i++)
+        {
+            image[i] = (int *)malloc(cols * sizeof(int));
+        }
 
     for (int i = 0; i < rows; i++)
     {
@@ -94,10 +98,15 @@ void binErosion(int rows, int cols, int eroded[rows][cols])
     }
 }
 
-void binDilation(int rows, int cols, int dilated[rows][cols])
+void binDilation(int rows, int cols, int **dilated)
 {
 
-    int image[rows][cols];
+        int **image = (int **)malloc(rows * sizeof(int *));
+        for (int i = 0; i < rows; i++)
+        {
+            image[i] = (int *)malloc(cols * sizeof(int));
+        }
+    
 
     for (int i = 0; i < rows; i++)
     {
@@ -133,7 +142,7 @@ void binDilation(int rows, int cols, int dilated[rows][cols])
     }
 }
 
-void binOpening(int rows, int cols, int imageMatrix[rows][cols])
+void binOpening(int rows, int cols, int **imageMatrix)
 {
 
     binErosion(rows, cols, imageMatrix);
@@ -141,10 +150,14 @@ void binOpening(int rows, int cols, int imageMatrix[rows][cols])
     binDilation(rows, cols, imageMatrix);
 }
 
-void identifyBorders(int rows, int cols, int imageMatrix[rows][cols])
+void identifyBorders(int rows, int cols, int **imageMatrix)
 {
 
-    int image[rows][cols];
+        int **image = (int **)malloc(rows * sizeof(int *));
+        for (int i = 0; i < rows; i++)
+        {
+            image[i] = (int *)malloc(cols * sizeof(int));
+        }
 
     for (int i = 0; i < rows; i++)
     {
@@ -165,7 +178,7 @@ void identifyBorders(int rows, int cols, int imageMatrix[rows][cols])
     }
 }
 
-void writeImage(int rows, int cols, int maxVal, int matrix[rows][cols], const char *outputFileName)
+void writeImage(int rows, int cols, int maxVal, int** matrix, const char *outputFileName)
 {
     FILE *outputImage = fopen(outputFileName, "wb");
     if (outputImage == NULL)
@@ -229,14 +242,28 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    printf("prima scanf\n");
     fscanf(inputImage, "%d %d %d", &width, &height, &maxVal);
+        printf("dopo scanf\n");
 
     int treshold = atoi(argv[2]);
-    int result[height][width];
+    printf("dopo def threshold\n");
+    printf("height: %d\n", height);
+    printf("width: %d\n", width);
+
+    int **result = (int **)malloc(height * sizeof(int *));
+        for (int i = 0; i < height; i++)
+        {
+            result[i] = (int *)malloc(width * sizeof(int));
+        }
+
+
+    printf("dopo def result\n");
     int **imageMatrix;
 
+    printf("prima imageMatrix\n");
     imageMatrix = imageToMatrix(inputImage, width, height);
-
+    printf("dopo imageMatrix\n");
     fclose(inputImage);
 
     MPI_Barrier(MPI_COMM_WORLD);
@@ -253,8 +280,15 @@ int main(int argc, char *argv[])
     int endRow = startRow + (rowsPerProcess - structSize);
 
     printf("The process %d is working on rows %d:%d of the image.\n", my_rank, startRow, endRow - 1);
+    printf("prima recvMatrix\n");
 
-    int recvMatrix[rowsPerProcess][width];
+        int **recvMatrix = (int **)malloc(rowsPerProcess * sizeof(int *));
+        for (int i = 0; i < rowsPerProcess; i++)
+        {
+            recvMatrix[i] = (int *)malloc(width * sizeof(int));
+        }
+
+    printf("dopo recvMatrix\n");
 
     if(my_rank!=(size-1)){
     for (int i = 0; i < rowsPerProcess; i++)
@@ -279,12 +313,16 @@ int main(int argc, char *argv[])
     }
 
     binThreshold(rowsPerProcess, width, recvMatrix, treshold);
+    printf("binTreshold executed\n");
 
     binComplement(rowsPerProcess, width, recvMatrix);
+    printf("binComplement executed\n");
 
     binOpening(rowsPerProcess, width, recvMatrix);
+    printf("binOpening executed\n");
 
     identifyBorders(rowsPerProcess, width, recvMatrix);
+    printf("identifyBorders executed\n");
 
     for (int i = 0; i < rowsPerProcess; i++)
     {
@@ -314,9 +352,10 @@ int main(int argc, char *argv[])
             MPI_Recv(&processStartRow, 1, MPI_INT, process, 2, MPI_COMM_WORLD, &status);
             MPI_Recv(&processEndRow, 1, MPI_INT, process, 3, MPI_COMM_WORLD, &status);
 
+            printf("ricevo righe %d - %d\n", processStartRow, processEndRow);
             for (int i = processStartRow; i < processEndRow; i++)
             {
-                MPI_Recv(&result[i], width, MPI_INT, process, i, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                MPI_Recv(result[i], width, MPI_INT, process, i, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             }
         }
     }
@@ -326,7 +365,7 @@ int main(int argc, char *argv[])
         MPI_Send(&endRow, 1, MPI_INT, 0, 3, MPI_COMM_WORLD);
         for (int i = 0; i < height / size; i++)
         {
-            MPI_Send(&recvMatrix[i], width, MPI_INT, 0, startRow + i, MPI_COMM_WORLD);
+            MPI_Send(recvMatrix[i], width, MPI_INT, 0, startRow + i, MPI_COMM_WORLD);
         }
     }
 
@@ -340,11 +379,6 @@ int main(int argc, char *argv[])
         tot_time= stop_time - start_time;
         printf("Total time: %f", tot_time);
     }
-
-    for (int i = 0; i < height ; i++) {
-            free(imageMatrix[i]);
-    }
-        free(imageMatrix);
 
     MPI_Finalize();
     return 0;
