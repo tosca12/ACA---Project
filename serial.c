@@ -162,11 +162,7 @@ int **saveImage (FILE *inputImage, int width, int height) {
   
     for (int i = 0; i < height; i++) {
       for (int j = 0; j < width; j++) {
-         if (fscanf(inputImage, "%d", &matrix[i][j]) != 1) {
-                // Handle error or unexpected end of file
-                fprintf(stderr, "Error reading pixel values from the file.\n");
-                exit(1);
-         }
+          matrix[i][j]=fgetc(inputImage);
       }
     }
   
@@ -227,7 +223,7 @@ void writeImage(int **matrix, int width, int height, int maxVal, const char *out
     
     fscanf(inputImage, "%s", magicNumber);
     
-    if (magicNumber[0] != 'P' || magicNumber[1] != '2') {
+    if (magicNumber[0] != 'P' || magicNumber[1] != '5') {
         printf("Error: file format not supported\n");
         return 1;
     }
