@@ -243,7 +243,6 @@ int main(int argc, char *argv[])
     }
 
     fscanf(inputImage, "%d %d %d", &width, &height, &maxVal);
-        printf("dopo scanf\n");
 
     int treshold = atoi(argv[2]);
 
