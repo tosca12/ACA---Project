@@ -6,7 +6,7 @@
 int size, my_rank;
 MPI_Status status;
 
-void binThreshold(int rows, int cols, int imageMatrix[rows][cols], int value){
+void binThreshold(int rows, int cols, int **imageMatrix, int value){
 
     for(int i=0; i<rows; i++){
         for(int j=0; j<cols; j++){
@@ -36,7 +36,7 @@ int **imageToMatrix(FILE *inputImage, int width, int height) {
     return matrix;
 }
 
-void binComplement(int rows, int cols, int imageMatrix[rows][cols]){
+void binComplement(int rows, int cols, int **imageMatrix){
 
     for(int i=0; i<rows; i++){
         for(int j=0; j<cols; j++){
@@ -45,15 +45,18 @@ void binComplement(int rows, int cols, int imageMatrix[rows][cols]){
     }
 }
 
-void binErosion(int rows, int cols, int eroded[rows][cols]){
+void binErosion(int rows, int cols, int **eroded){
 
-        int image[rows][cols];
+        int **image = (int **)malloc(rows * sizeof(int *));
+	
+        for (int i = 0; i < rows; i++){
+            image[i] = (int *)malloc(cols * sizeof(int));
+        }
 
         for (int i=0; i<rows; i++){
             for (int j=0; j<cols; j++){
                 image[i][j]= eroded[i][j];
             }
-
         }
         
         for(int i = 1; i < rows -1 ; i++){
@@ -79,10 +82,14 @@ void binErosion(int rows, int cols, int eroded[rows][cols]){
 
 }
 
-void binDilation(int rows, int cols, int dilated[rows][cols]){
+void binDilation(int rows, int cols, int **dilated){
 
 
-    int image[rows][cols];
+	int **image = (int **)malloc(rows * sizeof(int *));
+        for (int i = 0; i < rows; i++)
+        {
+            image[i] = (int *)malloc(cols * sizeof(int));
+        }
 
     for (int i=0; i<rows; i++){
         for (int j=0; j<cols; j++){
@@ -115,17 +122,22 @@ void binDilation(int rows, int cols, int dilated[rows][cols]){
 }
 
 
-void binOpening(int rows, int cols, int imageMatrix[rows][cols]){
+void binOpening(int rows, int cols, int **imageMatrix){
 
     binErosion(rows, cols, imageMatrix);
+	
     binDilation(rows, cols, imageMatrix);
 
 }
 
 
-void identifyBorders(int rows, int cols, int imageMatrix[rows][cols]) {
+void identifyBorders(int rows, int cols, int **imageMatrix) {
 
-    int image[rows][cols];
+        int **image = (int **)malloc(rows * sizeof(int *));
+        for (int i = 0; i < rows; i++)
+        {
+            image[i] = (int *)malloc(cols * sizeof(int));
+        }
 
         for (int i=0; i<rows; i++){
             for (int j=0; j<cols; j++){
@@ -145,7 +157,7 @@ void identifyBorders(int rows, int cols, int imageMatrix[rows][cols]) {
 }
 
 
-void writeImage(int rows, int cols, int maxVal, int matrix[rows][cols], const char *outputFileName) {
+void writeImage(int rows, int cols, int maxVal, int **matrix, const char *outputFileName) {
 
     FILE *outputImage = fopen(outputFileName, "wb");
 
@@ -170,7 +182,7 @@ void writeImage(int rows, int cols, int maxVal, int matrix[rows][cols], const ch
 }
     
   
-int main(int argc, char*argv[]) {
+int main(int argc, char *argv[]) {
 
     FILE *inputImage;
     char magicNumber[3];
@@ -211,7 +223,12 @@ int main(int argc, char*argv[]) {
 
     int treshold=atoi(argv[2]);
 
-    int result[height][width];
+    int **result = (int **)malloc(height * sizeof(int *));
+        for (int i = 0; i < height; i++)
+        {
+            result[i] = (int *)malloc(width * sizeof(int));
+        }
+
     int **imageMatrix;
         
     imageMatrix= imageToMatrix(inputImage, width, height);
@@ -234,7 +251,11 @@ int main(int argc, char*argv[]) {
 
     printf("Process %d working on columns %d to %d.\n", my_rank, startCol, endCol - 1);
 
-    int recvMatrix[height][colsPerProcess];
+	int **recvMatrix = (int **)malloc(height * sizeof(int *));
+        for (int i = 0; i < height; i++)
+        {
+            recvMatrix[i] = (int *)malloc(colsPerProcess * sizeof(int));
+        }
 
     if(my_rank!=(size-1)){
     for (int i = 0; i < colsPerProcess; i++)
@@ -266,9 +287,9 @@ int main(int argc, char*argv[]) {
 
     identifyBorders(height, colsPerProcess, recvMatrix);
 
-    for(int i=0; i<height; i++){
-        for(int j=0; j<colsPerProcess; j++){
-            recvMatrix[i][j] = recvMatrix[i][j]*255;
+    for(int i=0; i< height; i++){
+        for(int j=0; j< colsPerProcess; j++){
+            recvMatrix[i][j] = recvMatrix[i][j] * 255;
         }
     }
 
@@ -315,7 +336,6 @@ int main(int argc, char*argv[]) {
         free(imageMatrix[i]);
      }
         free(imageMatrix);
-
 
     MPI_Finalize();
     return 0;
