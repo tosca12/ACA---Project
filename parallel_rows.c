@@ -242,14 +242,10 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    printf("prima scanf\n");
     fscanf(inputImage, "%d %d %d", &width, &height, &maxVal);
         printf("dopo scanf\n");
 
     int treshold = atoi(argv[2]);
-    printf("dopo def threshold\n");
-    printf("height: %d\n", height);
-    printf("width: %d\n", width);
 
     int **result = (int **)malloc(height * sizeof(int *));
         for (int i = 0; i < height; i++)
@@ -257,13 +253,9 @@ int main(int argc, char *argv[])
             result[i] = (int *)malloc(width * sizeof(int));
         }
 
-
-    printf("dopo def result\n");
     int **imageMatrix;
 
-    printf("prima imageMatrix\n");
     imageMatrix = imageToMatrix(inputImage, width, height);
-    printf("dopo imageMatrix\n");
     fclose(inputImage);
 
     MPI_Barrier(MPI_COMM_WORLD);
@@ -280,15 +272,12 @@ int main(int argc, char *argv[])
     int endRow = startRow + (rowsPerProcess - structSize);
 
     printf("The process %d is working on rows %d:%d of the image.\n", my_rank, startRow, endRow - 1);
-    printf("prima recvMatrix\n");
 
         int **recvMatrix = (int **)malloc(rowsPerProcess * sizeof(int *));
         for (int i = 0; i < rowsPerProcess; i++)
         {
             recvMatrix[i] = (int *)malloc(width * sizeof(int));
         }
-
-    printf("dopo recvMatrix\n");
 
     if(my_rank!=(size-1)){
     for (int i = 0; i < rowsPerProcess; i++)
@@ -313,16 +302,12 @@ int main(int argc, char *argv[])
     }
 
     binThreshold(rowsPerProcess, width, recvMatrix, treshold);
-    printf("binTreshold executed\n");
 
     binComplement(rowsPerProcess, width, recvMatrix);
-    printf("binComplement executed\n");
 
     binOpening(rowsPerProcess, width, recvMatrix);
-    printf("binOpening executed\n");
 
     identifyBorders(rowsPerProcess, width, recvMatrix);
-    printf("identifyBorders executed\n");
 
     for (int i = 0; i < rowsPerProcess; i++)
     {
