@@ -6,7 +6,7 @@
 int size, my_rank;
 MPI_Status status;
 
-void binThreshold(int rows, int cols, int imageMatrix[rows][cols], int value){
+void binThreshold(int rows, int cols, int **imageMatrix, int value){
 
     for(int i=0; i<rows; i++){
         for(int j=0; j<cols; j++){
@@ -19,7 +19,27 @@ void binThreshold(int rows, int cols, int imageMatrix[rows][cols], int value){
     }
 }
 
-void binComplement(int rows, int cols, int imageMatrix[rows][cols]){
+int **imageToMatrix(FILE *inputImage, int width, int height)
+{
+    int **matrix = (int **)malloc(height * sizeof(int *));
+    for (int i = 0; i < height; i++)
+    {
+        matrix[i] = (int *)malloc(width * sizeof(int));
+    }
+
+    for (int i = 0; i < height; i++)
+    {
+        for (int j = 0; j < width; j++)
+        {
+            matrix[i][j]=fgetc(inputImage);
+        }
+    }
+    
+    return matrix;
+}
+
+
+void binComplement(int rows, int cols, int **imageMatrix){
 
     for(int i=0; i<rows; i++){
         for(int j=0; j<cols; j++){
@@ -28,10 +48,14 @@ void binComplement(int rows, int cols, int imageMatrix[rows][cols]){
     }
 }
 
-void binErosion(int rows, int cols, int eroded[rows][cols]){
+void binErosion(int rows, int cols, int **eroded){
 
         
-        int image[rows][cols];
+        int **image = (int **)malloc(rows * sizeof(int *));
+        for (int i = 0; i < rows; i++)
+        {
+            image[i] = (int *)malloc(cols * sizeof(int));
+        }
 
         for (int i=0; i<rows; i++){
             for (int j=0; j<cols; j++){
@@ -64,10 +88,14 @@ void binErosion(int rows, int cols, int eroded[rows][cols]){
 }
 
 
-void binDilation(int rows, int cols, int dilated[rows][cols]){
+void binDilation(int rows, int cols, int **dilated){
 
 
-        int image[rows][cols];
+        int **image = (int **)malloc(rows * sizeof(int *));
+        for (int i = 0; i < rows; i++)
+        {
+            image[i] = (int *)malloc(cols * sizeof(int));
+        }
 
         for (int i=0; i<rows; i++){
             for (int j=0; j<cols; j++){
@@ -99,7 +127,7 @@ void binDilation(int rows, int cols, int dilated[rows][cols]){
 }
 
 
-void binOpening(int rows, int cols, int imageMatrix[rows][cols]){
+void binOpening(int rows, int cols, int **imageMatrix){
 
     binErosion(rows, cols, imageMatrix);
 
@@ -108,15 +136,18 @@ void binOpening(int rows, int cols, int imageMatrix[rows][cols]){
 }
 
 
-void identifyBorders(int rows, int cols, int imageMatrix[rows][cols]) {
+void identifyBorders(int rows, int cols, int **imageMatrix) {
 
-    int image[rows][cols];
+        int **image = (int **)malloc(rows * sizeof(int *));
+        for (int i = 0; i < rows; i++)
+        {
+            image[i] = (int *)malloc(cols * sizeof(int));
+        }
 
         for (int i=0; i<rows; i++){
             for (int j=0; j<cols; j++){
                 image[i][j]= imageMatrix[i][j];
             }
-
         }
 
     binErosion(rows, cols, imageMatrix);
@@ -130,7 +161,7 @@ void identifyBorders(int rows, int cols, int imageMatrix[rows][cols]) {
 }
 
 
-void writeImage(int rows, int cols, int maxVal, int matrix[rows][cols], const char *outputFileName) {
+void writeImage(int rows, int cols, int maxVal, int **matrix, const char *outputFileName) {
     FILE *outputImage = fopen(outputFileName, "wb");
     if (outputImage == NULL) {
         printf("Error: Could not open %s for writing.\n", outputFileName);
@@ -152,7 +183,7 @@ void writeImage(int rows, int cols, int maxVal, int matrix[rows][cols], const ch
 }
     
   
-int main(int argc, char*argv[]) {
+int main(int argc, char *argv[]) {
 
     FILE *inputImage;
     char magicNumber[3];
@@ -208,29 +239,24 @@ int main(int argc, char*argv[]) {
     int treshold=atoi(argv[2]);
 
     int recvMatrix[height/size][width];
-    int result[height][width];
-    int imageMatrix[height][width];
+	
+    int **result = (int **)malloc(height * sizeof(int *));
+        for (int i = 0; i < height; i++)
+        {
+            result[i] = (int *)malloc(width * sizeof(int));
+        }
 
+    int **imageMatrix;
 
 if(my_rank==0){
 
-        for (int i = 0; i < height-newRows; i++) {
-            for (int j = 0; j < width; j++) {
-               imageMatrix[i][j]=fgetc(inputImage);
-            }
-        }
-
-        for (int i = height-newRows; i < height; i++) {
-            for (int j = 0; j < width; j++) {
-                imageMatrix[i][j]= 0;
-            }
-        }
+	imageMatrix = imageToMatrix(inputImage, width, height);
 
     fclose(inputImage);
 
 }
 
-  	MPI_Scatter(imageMatrix, height/size*width, MPI_INT, 
+  MPI_Scatter(imageMatrix, height/size*width, MPI_INT, 
 		    recvMatrix, height*width/size, MPI_INT,
                     0, MPI_COMM_WORLD);
 
