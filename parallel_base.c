@@ -239,7 +239,7 @@ int main(int argc, char *argv[]) {
     int treshold=atoi(argv[2]);
 
         int **recvMatrix = (int **)malloc(height/size * sizeof(int *));
-        for (int i = 0; i < rowsPerProcess; i++)
+        for (int i = 0; i < height/size; i++)
         {
             recvMatrix[i] = (int *)malloc(width * sizeof(int));
         }
