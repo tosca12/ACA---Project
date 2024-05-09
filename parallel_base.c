@@ -1,7 +1,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-
 #include <mpi.h>
 
 int size, my_rank;
@@ -239,7 +238,11 @@ int main(int argc, char *argv[]) {
 
     int treshold=atoi(argv[2]);
 
-    int recvMatrix[height/size][width];
+        int **recvMatrix = (int **)malloc(rowsPerProcess * sizeof(int *));
+        for (int i = 0; i < rowsPerProcess; i++)
+        {
+            recvMatrix[i] = (int *)malloc(width * sizeof(int));
+        }
 	
     int **result = (int **)malloc(height * sizeof(int *));
         for (int i = 0; i < height; i++)
