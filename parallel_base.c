@@ -295,8 +295,6 @@ int main(int argc, char *argv[]) {
 
     int *result = (int*)malloc(height * width * sizeof(int));
 
-    printf("\n PRE Scatter, rank: %d  and value: %d\n\n", my_rank, imageMatrix[0][0]);
-
     int *sendArray = (int*)malloc(height * width * sizeof(int));
     sendArray = matrixToArray(height, width, imageMatrix);
 
@@ -307,23 +305,6 @@ int main(int argc, char *argv[]) {
                 0, MPI_COMM_WORLD);
 
     int **recvMatrix = arrayToMatrix(height/size, width, recvArray);
-  
-    printf("\n POST Scatter, rank: %d  and value: %d %d\n\n", my_rank, recvMatrix[0][0], imageMatrix[0][0]);
-
-     if (my_rank==0){
-
-              writeImage(height/size, width, maxVal, recvMatrix, "./out/original_0.pgm");
-    }
-
-        if (my_rank==1){
-
-              writeImage(height/size, width, maxVal, recvMatrix, "./out/original_1.pgm");
-    }
-
-        if (my_rank==2){
-
-              writeImage(height/size, width, maxVal, recvMatrix, "./out/original_2.pgm");
-    }
 
     binThreshold(height/size, width, recvMatrix, treshold);
     
@@ -339,28 +320,11 @@ int main(int argc, char *argv[]) {
         }
     }
 
-         if (my_rank==0){
-
-              writeImage(height/size, width, maxVal, recvMatrix, "./out/borders_0.pgm");
-    }
-
-        if (my_rank==1){
-
-              writeImage(height/size, width, maxVal, recvMatrix, "./out/borders_1.pgm");
-    }
-
-        if (my_rank==2){
-
-              writeImage(height/size, width, maxVal, recvMatrix, "./out/borders_2.pgm");
-    }
-
     recvArray = matrixToArray(height/size, width, recvMatrix);
 
     MPI_Gather(recvArray, height*width/size, MPI_INT, result, height*width/size, MPI_INT, 0, MPI_COMM_WORLD);
 
     int **resultMatrix = arrayToMatrix(height, width, result);
-
-    printf("\n post Gather, rank: %d \n", my_rank);
 
     for (int i = 0; i < height / size; i++) {
                 free(recvMatrix[i]);
