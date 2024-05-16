@@ -66,7 +66,8 @@ void binErosion(int** eroded, int width, int height){
         }    
 
         for (int i = 0; i < height; i++) {
-            free(image[i]);
+            printf("%d\n", image[i]);
+		free(image[i]);
         }
         
         free(image);
@@ -107,8 +108,9 @@ void binDilation(int** dilated, int width, int height){
           }    
 
         for (int i = 0; i < height; i++) {
-            free(image[i]);
-		printf("\n");
+            	printf("%d\n", image[i]);
+		free(image[i]);
+		
         }
         
         free(image);
